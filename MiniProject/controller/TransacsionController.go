@@ -23,8 +23,8 @@ func GetTransacsionsController(c echo.Context) error {
 		})
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"messages": "success get all Transacsions",
-		"Transaksi":    Transacsions,
+		"messages":  "success get all Transacsions",
+		"Transaksi": Transacsions,
 	})
 }
 
@@ -40,8 +40,8 @@ func GetTransacsionController(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"messages": "success get Transacsion by id",
-		"Transaksi":     Transacsions,
+		"messages":  "success get Transacsion by id",
+		"Transaksi": Transacsions,
 	})
 }
 
@@ -57,8 +57,8 @@ func DeleteTransacsionController(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success delete Transacsion by id",
-		"Transaksi":    Transacsions,
+		"message":   "success delete Transacsion by id",
+		"Transaksi": Transacsions,
 	})
 }
 
@@ -83,22 +83,32 @@ func UpdateTransacsionController(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "Transacsion updated successfully",
-		"Transaksi":    Transacsion,
+		"message":   "Transacsion updated successfully",
+		"Transaksi": Transacsion,
 	})
 }
 
 // create new Transacsion
 func CreateTransacsionController(c echo.Context) error {
 	Transacsions := models.Transacsion{}
+	Products := models.Product{}
 	c.Bind(&Transacsions)
 
 	if err := database.DB.Save(&Transacsions).Error; err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+TransacsionsResponse := models.TransacsionResponse{
+    ID:      int(Transacsions.ID),
+    Product: Products.Nama,
+    Amount:  Transacsions.Amount,
+    Status:  Transacsions.Seller,
+    Seller:  "Wahyu",
+    User:    models.User{},
+}
+
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success create new book",
-		"Transaksi":    Transacsions,
+		"message":   "success melakukan transaksi",
+		"Transaksi": TransacsionsResponse,
 	})
 }
