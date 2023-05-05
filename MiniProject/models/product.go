@@ -13,3 +13,7 @@ type Product struct {
 	Brand       string `json:"brand" form:"brand"`
 	Stock       int    `json:"stock" form:"stock"`
 }
+
+type ClassProduct struct{
+	
+}
