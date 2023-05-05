@@ -11,7 +11,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 var users []models.User
@@ -96,28 +95,54 @@ func DeleteUserController(c echo.Context) error {
 
 // update user by id
 func UpdateUserController(c echo.Context) error {
-	id := c.Param("id")
+	// Retrieve the JWT token from the request context and extract the role claim
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
 
-	var user models.User
-	if err := database.DB.Model(&models.User{}).Where("id = ?", id).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	if role == "admin" {
+		// If token has admin role, update user by ID
+		id := c.Param("id")
+
+		var user models.User
+		if err := database.DB.Where("id = ?", id).First(&user).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
-	}
 
-	if err := c.Bind(&user); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
-	}
+		if err := c.Bind(&user); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
+		}
 
-	if err := database.DB.Model(&models.User{}).Updates(user).Error; err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
-	}
+		if err := database.DB.Model(&user).Updates(user).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+		}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "User updated successfully",
-		"user":    user,
-	})
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "User updated successfully",
+			"user":    user,
+		})
+	} else {
+		// If token doesn't have admin role, update user by token claims name
+		username := claims["name"].(string)
+
+		var user models.User
+		if err := database.DB.Where("name = ?", username).First(&user).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+		}
+
+		if err := c.Bind(&user); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
+		}
+
+		if err := database.DB.Model(&user).Updates(user).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "User updated successfully",
+			"user":    user,
+		})
+	}
 }
 
 // create new user

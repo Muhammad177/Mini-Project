@@ -97,15 +97,14 @@ func CreateTransacsionController(c echo.Context) error {
 	if err := database.DB.Save(&Transacsions).Error; err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-TransacsionsResponse := models.TransacsionResponse{
-    ID:      int(Transacsions.ID),
-    Product: Products.Nama,
-    Amount:  Transacsions.Amount,
-    Status:  Transacsions.Seller,
-    Seller:  "Wahyu",
-    User:    models.User{},
-}
-
+	TransacsionsResponse := models.TransacsionResponse{
+		ID:      int(Transacsions.ID),
+		Product: Products.Nama,
+		Amount:  Transacsions.Amount,
+		Status:  Transacsions.Status,
+		Seller:  "Wahyu",
+		User:    models.User{},
+	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message":   "success melakukan transaksi",

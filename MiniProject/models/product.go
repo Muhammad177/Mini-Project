@@ -4,7 +4,6 @@ import "github.com/jinzhu/gorm"
 
 type Product struct {
 	gorm.Model
-	IDProduct   int    `json:"IdProduct" form:"IdProduct"`
 	Nama        string `json:"nama" form:"nama"`
 	Description string `json:"description" form:"description"`
 	Price       int    `json:"price" form:"price"`
@@ -14,6 +13,7 @@ type Product struct {
 	Stock       int    `json:"stock" form:"stock"`
 }
 
-type ClassProduct struct{
-	
+type ClassProduct struct {
+	ID    int    `json:"id" form:"name"`
+	Brand string `json:"brand" form:"brand"`
 }
