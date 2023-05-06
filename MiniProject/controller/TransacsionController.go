@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/golang-jwt/jwt"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
 )
@@ -68,46 +68,69 @@ func UpdateTransacsionController(c echo.Context) error {
 
 	var Transacsion models.Transacsion
 	if err := database.DB.Model(&models.Transacsion{}).Where("id = ?", id).First(&Transacsion).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return echo.NewHTTPError(http.StatusNotFound, "Transacsion not found")
-		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 
-	if err := c.Bind(&Transacsion); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
+	// Check if the user making the request has the "admin" role
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+	if role != "admin" {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Only admin can perform this action")
 	}
 
-	if err := database.DB.Model(&models.Transacsion{}).Updates(&Transacsion).Error; err != nil {
+	// Update the status to "accept"
+	if err := database.DB.Model(&models.Transacsion{}).Where("id = ?", id).Update("status", "accept").Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
-
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message":   "Transacsion updated successfully",
+		"message":   "Transacsion Accept successfully",
 		"Transaksi": Transacsion,
 	})
 }
 
-// create new Transacsion
 func CreateTransacsionController(c echo.Context) error {
-	Transacsions := models.Transacsion{}
-	Products := models.Product{}
-	c.Bind(&Transacsions)
-
-	if err := database.DB.Save(&Transacsions).Error; err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	// Parse the request body into a transaction object
+	var transaction models.Transacsion
+	if err := c.Bind(&transaction); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
 	}
-	TransacsionsResponse := models.TransacsionResponse{
-		ID:      int(Transacsions.ID),
-		Product: Products.Nama,
-		Amount:  Transacsions.Amount,
-		Status:  Transacsions.Status,
-		Seller:  "Wahyu",
+
+	// Check the user role from JWT token
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userRole := claims["role"].(string)
+
+	// Set the transaction status based on the user role
+	if userRole == "user" {
+		transaction.Status = "pending"
+	}
+
+	// Fetch the associated product
+	var product models.Product
+	if err := database.DB.First(&product, transaction.ProductID).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch product")
+	}
+	transaction.Amount = product.Price
+	transaction.Seller = "Wahyu"
+
+	// Save the transaction to the database
+	if err := database.DB.Save(&transaction).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
+
+	// Prepare the response data
+	transacsionResponse := models.TransacsionResponse{
+		ID:      int(transaction.ID),
+		Product: product.Nama,
+		Amount:  transaction.Amount,
+		Status:  transaction.Status,
+		Seller:  transaction.Seller,
 		User:    models.User{},
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message":   "success melakukan transaksi",
-		"Transaksi": TransacsionsResponse,
+		"message":     "Transaction created successfully",
+		"transaction": transacsionResponse,
 	})
 }
