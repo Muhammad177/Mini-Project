@@ -67,6 +67,9 @@ func UpdateTransacsionController(c echo.Context) error {
 	id := c.Param("id")
 
 	var Transacsion models.Transacsion
+	if err := database.DB.Preload("Product").Preload("User").Where("id = ?", id).First(&Transacsion).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
 	if err := database.DB.Model(&models.Transacsion{}).Where("id = ?", id).First(&Transacsion).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
@@ -100,7 +103,7 @@ func CreateTransacsionController(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userRole := claims["role"].(string)
-
+	userId := int(claims["user_id"].(float64))
 	// Set the transaction status based on the user role
 	if userRole == "user" {
 		transaction.Status = "pending"
@@ -111,6 +114,7 @@ func CreateTransacsionController(c echo.Context) error {
 	if err := database.DB.First(&product, transaction.ProductID).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch product")
 	}
+	transaction.UserID = userId
 	transaction.Amount = product.Price
 	transaction.Seller = "Wahyu"
 
@@ -118,7 +122,9 @@ func CreateTransacsionController(c echo.Context) error {
 	if err := database.DB.Save(&transaction).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
-
+	if err := database.DB.Preload("User").First(&transaction).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch user")
+	}
 	// Prepare the response data
 	transacsionResponse := models.TransacsionResponse{
 		ID:      int(transaction.ID),
@@ -126,7 +132,7 @@ func CreateTransacsionController(c echo.Context) error {
 		Amount:  transaction.Amount,
 		Status:  transaction.Status,
 		Seller:  transaction.Seller,
-		User:    models.User{},
+		User:    transaction.User,
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
