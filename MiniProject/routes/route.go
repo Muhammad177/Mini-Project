@@ -45,8 +45,10 @@ func New() *echo.Echo {
 	eJwt.GET("/Products", controller.GetProductsController)
 	eJwt.POST("/admin/Products", controller.CreateProductController)
 	eJwt.GET("/Products/:id", controller.GetProductController)
-	eJwt.DELETE("/Products/:id", controller.DeleteProductController)
+	eJwt.DELETE("/admin/Products/:id", controller.DeleteProductController)
 	eJwt.PUT("/admin/Products/:id", controller.UpdateProductController)
+	eJwt.POST("/user/transaksi", controller.CreateTransacsionController)
+	eJwt.PUT("/admin/transaksi/:id", controller.UpdateTransacsionController)
 	// start the server, and log if it fails
 	e.Logger.Fatal(e.Start(":8000"))
 	return e

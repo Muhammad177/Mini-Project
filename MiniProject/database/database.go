@@ -33,7 +33,7 @@ func InitDB() {
 		DB_Username: "wahyu",
 		DB_Password: "",
 		DB_Port:     "3306",
-		DB_Host:     "192.168.100.162",
+		DB_Host:     "192.168.100.6",
 		DB_Name:     "miniproject",
 	}
 

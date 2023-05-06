@@ -5,12 +5,9 @@ import (
 
 	"MiniProject/models"
 	"net/http"
-	"strconv"
 
 	"github.com/golang-jwt/jwt"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"gorm.io/gorm"
-
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,32 +15,37 @@ var Products []models.Product
 
 // get all Products
 func GetProductsController(c echo.Context) error {
+
 	err := database.DB.Find(&Products).Error
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]interface{}{
 			"message": err.Error(),
 		})
 	}
+
+	var classes []models.ClassProduct
+	for _, prod := range Products {
+		class := models.ClassProduct{ID: int(prod.ID), Brand: prod.Brand}
+		classes = append(classes, class)
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"messages": "success get all Products",
-		"Produk":   Products,
+		"Produk":   classes,
 	})
 }
 
 // get Product by id
 func GetProductController(c echo.Context) error {
-	ProductId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid Product ID")
-	}
-
-	if err := database.DB.First(&Products, ProductId).Error; err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+	id := c.Param("id")
+	var Products models.Product
+	if err := database.DB.Where("id = ?", id).First(&Products).Error; err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"messages": "success get Product by id",
-		"Produk":   Products,
+		"message": "success get Product by id",
+		"user":    Products,
 	})
 }
 
@@ -71,32 +73,24 @@ func DeleteProductController(c echo.Context) error {
 
 // update Product by id
 func UpdateProductController(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	if claims["role"] != "admin" {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "only admin can access"})
-	}
 	id := c.Param("id")
 
-	var Product models.Product
-	if err := database.DB.Model(&models.Product{}).Where("id = ?", id).First(&Product).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return echo.NewHTTPError(http.StatusNotFound, "Product not found")
-		}
+	var product models.Product
+	if err := database.DB.Model(&models.Product{}).Where("id = ?", id).First(&product).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 
-	if err := c.Bind(&Product); err != nil {
+	if err := c.Bind(&product); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
 	}
 
-	if err := database.DB.Model(&models.Product{}).Updates(Product).Error; err != nil {
+	if err := database.DB.Model(&models.Product{}).Updates(product).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Product updated successfully",
-		"Produk":  Product,
+		"user":    product,
 	})
 }
 
