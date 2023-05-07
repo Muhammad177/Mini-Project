@@ -4,7 +4,6 @@ import (
 	"MiniProject/database"
 	"MiniProject/models"
 	"net/http"
-	"strconv"
 
 	"github.com/golang-jwt/jwt"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -27,21 +26,36 @@ func GetTransacsionsController(c echo.Context) error {
 		"Transaksi": Transacsions,
 	})
 }
-
-// get Transacsion by id
 func GetTransacsionController(c echo.Context) error {
-	TransacsionId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid Transacsion ID")
+	// Retrieve the JWT token from the request context and extract the role claim
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+
+	//If token admin
+	if role == "admin" {
+		id := c.Param("id")
+		var Transacsion models.Transacsion
+		if err := database.DB.Where("id = ?", id).Preload("User").Preload("Product").First(&Transacsion).Error; err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "success get Transaksi by id",
+			"user":    Transacsion,
+		})
 	}
 
-	if err := database.DB.Preload("User").First(&Transacsions, TransacsionId).Error; err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+	// If token User
+	userId := int(claims["user_id"].(float64))
+	var Transacsion []models.Transacsion
+	if err := database.DB.Where("id = ?", userId).Preload("User").Preload("Product").First(&Transacsion).Error; err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"messages":  "success get Transacsion by id",
-		"Transaksi": Transacsions,
+		"message": "success get user info Transaksi By Id",
+		"user":    Transacsion,
 	})
 }
 
