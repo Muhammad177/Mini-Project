@@ -15,7 +15,7 @@ var Transacsions []models.Transacsion
 
 // get all Transacsions
 func GetTransacsionsController(c echo.Context) error {
-	err := database.DB.Preload("User").Find(&Transacsions).Error
+	err := database.DB.Preload("User").Preload("Product").Find(&Transacsions).Error
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]interface{}{
 			"message": err.Error(),
@@ -35,28 +35,29 @@ func GetTransacsionController(c echo.Context) error {
 	//If token admin
 	if role == "admin" {
 		id := c.Param("id")
-		var Transacsion models.Transacsion
-		if err := database.DB.Where("id = ?", id).Preload("User").Preload("Product").First(&Transacsion).Error; err != nil {
+		var Transacsion []models.Transacsion
+		if err := database.DB.Where("id = ?", id).Preload("User").Preload("Product").Find(&Transacsion).Error; err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "success get Transaksi by id",
-			"user":    Transacsion,
+			"Transaksi":    Transacsion,
 		})
 	}
 
 	// If token User
 	userId := int(claims["user_id"].(float64))
-	var Transacsion []models.Transacsion
-	if err := database.DB.Where("id = ?", userId).Preload("User").Preload("Product").First(&Transacsion).Error; err != nil {
+	var Transacsions []models.Transacsion
+	if err := database.DB.Where("user_id = ?", userId).Preload("User").Preload("Product").Find(&Transacsions).Error; err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success get user info Transaksi By Id",
-		"user":    Transacsion,
+		"message":      "success get user info Transaksi By Id",
+		"transactions": Transacsions,
 	})
+
 }
 
 // delete Transacsion by id
@@ -119,6 +120,9 @@ func CreateTransacsionController(c echo.Context) error {
 	userRole := claims["role"].(string)
 	userId := int(claims["user_id"].(float64))
 	// Set the transaction status based on the user role
+	if userRole == "admin" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "only user"})
+	}
 	if userRole == "user" {
 		transaction.Status = "pending"
 	}
