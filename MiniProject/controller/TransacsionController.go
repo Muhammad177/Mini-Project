@@ -41,8 +41,8 @@ func GetTransacsionController(c echo.Context) error {
 		}
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
-			"message": "success get Transaksi by id",
-			"Transaksi":    Transacsion,
+			"message":   "success get Transaksi by id",
+			"Transaksi": Transacsion,
 		})
 	}
 
@@ -82,10 +82,7 @@ func UpdateTransacsionController(c echo.Context) error {
 	id := c.Param("id")
 
 	var Transacsion models.Transacsion
-	if err := database.DB.Preload("Product").Preload("User").Where("id = ?", id).First(&Transacsion).Error; err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
-	}
-	if err := database.DB.Model(&models.Transacsion{}).Where("id = ?", id).First(&Transacsion).Error; err != nil {
+	if err := database.DB.Preload("Product").Preload("User").Model(&models.Transacsion{}).Where("id = ?", id).First(&Transacsion).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 
@@ -99,6 +96,18 @@ func UpdateTransacsionController(c echo.Context) error {
 
 	// Update the status to "accept"
 	if err := database.DB.Model(&models.Transacsion{}).Where("id = ?", id).Update("status", "accept").Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
+	productID := Transacsion.ProductID
+	var product models.Product
+	if err := database.DB.Model(&models.Product{}).Where("id = ?", productID).First(&product).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
+
+	// Min -1 Product stock
+	product.Stock -= 1
+
+	if err := database.DB.Model(&models.Product{}).Where("id = ?", productID).Update("stock", product.Stock).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{

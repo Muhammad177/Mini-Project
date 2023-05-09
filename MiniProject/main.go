@@ -8,6 +8,7 @@ import (
 func main() {
 
 	database.InitDB()
+	database.InitialMigration()
 	e := routes.New()
 
 	e.Start("8000")
