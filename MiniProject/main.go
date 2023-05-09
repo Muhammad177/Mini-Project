@@ -3,14 +3,25 @@ package main
 import (
 	"MiniProject/database"
 	"MiniProject/routes"
+	"fmt"
+	"os"
+
+	"github.com/labstack/echo/v4"
 )
 
-func main() {
+const DEFAULT_PORT = "8080"
 
+func main() {
 	database.InitDB()
 	database.InitialMigration()
-	e := routes.New()
+	app := echo.New()
+	routes.Routes(app)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = DEFAULT_PORT
+	}
+	appPort := fmt.Sprintf(":%s", port)
 
-	e.Start("8000")
+	app.Logger.Fatal(app.Start(appPort))
 
 }

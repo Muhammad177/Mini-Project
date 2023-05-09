@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"os"
 
 	"MiniProject/models"
 
@@ -10,8 +11,14 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+var DB *gorm.DB
+
 var (
-	DB *gorm.DB
+	DB_Username = os.Getenv("DB_Username")
+	DB_Password = os.Getenv("DB_Password")
+	DB_Port     = os.Getenv("DB_Port")
+	DB_Host     = os.Getenv("DB_Host")
+	DB_Name     = os.Getenv("DB_Name")
 )
 
 func init() {

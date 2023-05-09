@@ -9,9 +9,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func New() *echo.Echo {
+func Routes(e *echo.Echo) {
 
-	e := echo.New()
 	midleware.LogMiddleware(e)
 	// routing with query parameter
 	e.POST("/users", controller.CreateUserController)
@@ -36,5 +35,4 @@ func New() *echo.Echo {
 	eJwt.GET("/user/transaksi", controller.GetTransacsionController)
 	// start the server, and log if it fails
 	e.Logger.Fatal(e.Start(":8000"))
-	return e
 }
