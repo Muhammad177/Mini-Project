@@ -7,13 +7,11 @@ import (
 	"MiniProject/models"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-
-	"github.com/jinzhu/gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
-
-var ()
 
 func init() {
 	InitDB()
@@ -28,6 +26,14 @@ type Config struct {
 	DB_Name     string
 }
 
+// config := Config{
+// 	DB_Username: "wahyu",
+// 	DB_Password: "",
+// 	DB_Port:     "3306",
+// 	DB_Host:     "localhost",
+// 	DB_Name:     "miniproject",
+// }
+
 func InitDB() {
 
 	config := Config{
@@ -38,7 +44,7 @@ func InitDB() {
 		DB_Name:     os.Getenv("DB_Name"),
 	}
 
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True",
 		config.DB_Username,
 		config.DB_Password,
 		config.DB_Host,
@@ -47,7 +53,7 @@ func InitDB() {
 	)
 
 	var err error
-	DB, err = gorm.Open("mysql", connectionString)
+	DB, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
