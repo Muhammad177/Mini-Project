@@ -33,6 +33,4 @@ func Routes(e *echo.Echo) {
 	eJwt.GET("/admin/transaksi", controller.GetTransacsionsController)
 	eJwt.GET("/admin/transaksi/:id", controller.GetTransacsionController)
 	eJwt.GET("/user/transaksi", controller.GetTransacsionController)
-	// start the server, and log if it fails
-	e.Logger.Fatal(e.Start(":8000"))
 }
