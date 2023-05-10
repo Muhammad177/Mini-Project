@@ -7,8 +7,8 @@ import (
 	"MiniProject/models"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+
+	"github.com/jinzhu/gorm"
 )
 
 var DB *gorm.DB
@@ -53,7 +53,7 @@ func InitDB() {
 	)
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+	DB, err = gorm.Open("mysql", connectionString)
 	if err != nil {
 		panic(err)
 	}
