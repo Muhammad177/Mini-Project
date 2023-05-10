@@ -13,7 +13,7 @@ const DEFAULT_PORT = "8080"
 
 func main() {
 	database.InitDB()
-	database.InitialMigration()
+
 	app := echo.New()
 	routes.Routes(app)
 	port := os.Getenv("PORT")
