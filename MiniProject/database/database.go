@@ -13,13 +13,7 @@ import (
 
 var DB *gorm.DB
 
-var (
-	DB_Username = os.Getenv("DB_Username")
-	DB_Password = os.Getenv("DB_Password")
-	DB_Port     = os.Getenv("DB_Port")
-	DB_Host     = os.Getenv("DB_Host")
-	DB_Name     = os.Getenv("DB_Name")
-)
+var ()
 
 func init() {
 	InitDB()
@@ -37,11 +31,11 @@ type Config struct {
 func InitDB() {
 
 	config := Config{
-		DB_Username: "wahyu",
-		DB_Password: "",
-		DB_Port:     "3306",
-		DB_Host:     "localhost",
-		DB_Name:     "miniproject",
+		DB_Username: os.Getenv("DB_Username"),
+		DB_Password: os.Getenv("DB_Password"),
+		DB_Port:     os.Getenv("DB_Port"),
+		DB_Host:     os.Getenv("DB_Host"),
+		DB_Name:     os.Getenv("DB_Name"),
 	}
 
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
