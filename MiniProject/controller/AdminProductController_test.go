@@ -15,7 +15,6 @@ type controller struct{}
 
 func initEcho() *echo.Echo {
 	database.InitDB()
-	database.InitialMigration()
 
 	e := echo.New()
 
